@@ -20,7 +20,8 @@ app.use(cors({
     if (!origin || allowedOrigins.some((o) => origin.startsWith(o))) {
       callback(null, true);
     } else {
-      callback(new Error("Not allowed by CORS"));
+      // Return null (block) instead of throwing — avoids Express turning it into a 500
+      callback(null, false);
     }
   },
 }));
