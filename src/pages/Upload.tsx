@@ -1,6 +1,6 @@
 // src/pages/Upload.tsx
 import React, { FC, useRef, useState } from "react";
-import { Loader2, Sparkles, CheckCircle } from "lucide-react";
+import { Loader2, Sparkles, CheckCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE } from "../api";
 
@@ -8,26 +8,30 @@ interface UploadProps {
   onFrameSelect: (frameUrl: string, description: string | null) => void;
 }
 
+interface UploadResult {
+  frame: string;
+  frameDescription: string | null;
+  timestamp: number;
+  source: string;
+  alternateFrames: string[];
+}
+
 const Upload: FC<UploadProps> = ({ onFrameSelect }) => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isUploading, setIsUploading] = useState(false);
-  const [result, setResult] = useState<{ frame: string; frameDescription: string; timestamp: number } | null>(null);
+  const [result, setResult] = useState<UploadResult | null>(null);
+  const [selectedFrame, setSelectedFrame] = useState<string | null>(null);
+  const [showAlternates, setShowAlternates] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const triggerFileInput = () => {
-    if (!isUploading && fileInputRef.current) {
-      fileInputRef.current.click();
-    }
+    if (!isUploading && fileInputRef.current) fileInputRef.current.click();
   };
 
   const safeJsonParse = async (response: Response) => {
-    try {
-      return await response.json();
-    } catch {
-      return null;
-    }
+    try { return await response.json(); } catch { return null; }
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,6 +41,8 @@ const Upload: FC<UploadProps> = ({ onFrameSelect }) => {
     setIsUploading(true);
     setError(null);
     setResult(null);
+    setSelectedFrame(null);
+    setShowAlternates(false);
 
     const formData = new FormData();
     formData.append("video", file);
@@ -48,34 +54,39 @@ const Upload: FC<UploadProps> = ({ onFrameSelect }) => {
       });
 
       const data = await safeJsonParse(response);
+      if (!data) throw new Error("Backend returned invalid response.");
+      if (!response.ok || !data.frame) throw new Error(data.error || "Video upload failed");
 
-      if (!data) {
-        throw new Error("Backend returned invalid response. Check if server crashed or returned HTML.");
-      }
-
-      if (!response.ok || !data.frame) {
-        throw new Error(data.error || "Video upload failed");
-      }
-
-      setResult({
+      const uploadResult: UploadResult = {
         frame: data.frame,
         frameDescription: data.frameDescription,
         timestamp: data.timestamp,
-      });
+        source: data.source || "ffmpeg-fallback",
+        alternateFrames: data.alternateFrames || [],
+      };
+      setResult(uploadResult);
+      setSelectedFrame(uploadResult.frame);
     } catch (err) {
-      const message = (err as Error).message;
-      console.error("Upload Error:", message);
-      setError(message);
+      setError((err as Error).message);
     } finally {
       setIsUploading(false);
     }
   };
 
+  const handleChooseAlternate = (frame: string) => {
+    setSelectedFrame(frame);
+    setShowAlternates(false);
+  };
+
   const handleProceed = () => {
-    if (!result) return;
-    onFrameSelect(result.frame, result.frameDescription);
+    if (!result || !selectedFrame) return;
+    // Only pass frameDescription if the user kept the Gemini-picked frame
+    const desc = selectedFrame === result.frame ? result.frameDescription : null;
+    onFrameSelect(selectedFrame, desc);
     navigate("/generator");
   };
+
+  const isGeminiFrame = result && selectedFrame === result.frame && result.source === "gemini";
 
   return (
     <div className="relative flex min-h-screen w-full flex-col bg-[#000000]">
@@ -87,17 +98,9 @@ const Upload: FC<UploadProps> = ({ onFrameSelect }) => {
 
       <div className="px-6 md:px-20 flex flex-1 justify-center py-5">
         <div className="max-w-[960px] flex-1 flex flex-col">
-          <h2 className="text-white text-[28px] font-bold text-center py-5">
-            Upload Your Video
-          </h2>
+          <h2 className="text-white text-[28px] font-bold text-center py-5">Upload Your Video</h2>
 
-          <input
-            type="file"
-            ref={fileInputRef}
-            accept="video/*"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
+          <input type="file" ref={fileInputRef} accept="video/*" onChange={handleFileSelect} className="hidden" />
 
           {!result && !isUploading && (
             <div
@@ -108,9 +111,7 @@ const Upload: FC<UploadProps> = ({ onFrameSelect }) => {
                 <p className="text-white text-lg">Drop your video here or</p>
                 <p className="text-gray-500 text-sm">Gemini AI will watch your video and pick the best frame automatically</p>
               </div>
-              <button className="h-10 px-4 bg-[#221113] text-white rounded-lg font-bold">
-                📁 Upload Video
-              </button>
+              <button className="h-10 px-4 bg-[#221113] text-white rounded-lg font-bold">📁 Upload Video</button>
             </div>
           )}
 
@@ -121,7 +122,7 @@ const Upload: FC<UploadProps> = ({ onFrameSelect }) => {
                 Gemini is Analysing Your Video...
               </h2>
               <p className="text-[#b89d9d] text-base text-center max-w-md">
-                AI is watching your video to find the most cinematic frame. This may take 20–40 seconds depending on video length.
+                AI is watching your video to find the most cinematic frame. This may take 20–40 seconds.
               </p>
             </div>
           )}
@@ -130,27 +131,68 @@ const Upload: FC<UploadProps> = ({ onFrameSelect }) => {
             <p className="text-red-500 text-center mt-4 bg-red-950 border border-red-800 rounded-lg p-4">{error}</p>
           )}
 
-          {result && (
+          {result && selectedFrame && (
             <div className="mt-8 flex flex-col items-center gap-6">
-              {/* AI badge */}
-              <div className="flex items-center gap-2 bg-[#1a1a2e] border border-indigo-700 rounded-full px-4 py-2">
-                <Sparkles className="w-4 h-4 text-indigo-400" />
-                <span className="text-indigo-300 text-sm font-medium">Best frame picked by Gemini AI</span>
-                <span className="text-gray-500 text-xs">@ {result.timestamp.toFixed(1)}s</span>
+
+              {/* Badge */}
+              {isGeminiFrame ? (
+                <div className="flex items-center gap-2 bg-[#1a1a2e] border border-indigo-700 rounded-full px-4 py-2">
+                  <Sparkles className="w-4 h-4 text-indigo-400" />
+                  <span className="text-indigo-300 text-sm font-medium">Best frame picked by Gemini AI</span>
+                  <span className="text-gray-500 text-xs">@ {result.timestamp.toFixed(1)}s</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 bg-[#1a1a0a] border border-yellow-700 rounded-full px-4 py-2">
+                  <CheckCircle className="w-4 h-4 text-yellow-400" />
+                  <span className="text-yellow-300 text-sm font-medium">Your selected frame</span>
+                </div>
+              )}
+
+              {/* Selected frame preview */}
+              <div className={`border-2 rounded-xl overflow-hidden shadow-2xl max-w-lg w-full ${isGeminiFrame ? "border-indigo-700 shadow-indigo-900/40" : "border-yellow-700 shadow-yellow-900/20"}`}>
+                <img src={selectedFrame} alt="Selected frame" className="w-full" />
               </div>
 
-              {/* Frame preview */}
-              <div className="border-2 border-indigo-700 rounded-xl overflow-hidden shadow-2xl shadow-indigo-900/40 max-w-lg w-full">
-                <img src={result.frame} alt="AI-selected best frame" className="w-full" />
-              </div>
+              {/* Gemini description — only when Gemini frame is active */}
+              {isGeminiFrame && result.frameDescription && (
+                <div className="bg-[#0f0f1a] border border-gray-800 rounded-lg p-4 max-w-lg w-full">
+                  <p className="text-gray-500 text-xs uppercase tracking-wider mb-2">What Gemini saw</p>
+                  <p className="text-gray-300 text-sm leading-relaxed">{result.frameDescription}</p>
+                </div>
+              )}
 
-              {/* Gemini's description */}
-              <div className="bg-[#0f0f1a] border border-gray-800 rounded-lg p-4 max-w-lg w-full">
-                <p className="text-gray-500 text-xs uppercase tracking-wider mb-2">What Gemini saw</p>
-                <p className="text-gray-300 text-sm leading-relaxed">{result.frameDescription}</p>
-              </div>
+              {/* Toggle alternate frames */}
+              {result.alternateFrames.length > 0 && (
+                <div className="max-w-lg w-full">
+                  <button
+                    onClick={() => setShowAlternates((v) => !v)}
+                    className="flex items-center justify-between w-full text-gray-400 hover:text-white text-sm border border-gray-800 hover:border-gray-600 rounded-lg px-4 py-3 transition-colors"
+                  >
+                    <span>Not happy with this? Choose a different frame</span>
+                    {showAlternates ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </button>
 
-              {/* Proceed button */}
+                  {showAlternates && (
+                    <div className="mt-3 grid grid-cols-3 gap-3">
+                      {result.alternateFrames.map((frame, i) => (
+                        <div
+                          key={i}
+                          onClick={() => handleChooseAlternate(frame)}
+                          className={`border-2 rounded-lg overflow-hidden cursor-pointer transition-all ${
+                            selectedFrame === frame
+                              ? "border-yellow-500 scale-95"
+                              : "border-gray-700 hover:border-gray-400"
+                          }`}
+                        >
+                          <img src={frame} alt={`Frame ${i + 1}`} className="w-full" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Proceed */}
               <button
                 onClick={handleProceed}
                 className="flex items-center gap-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-8 py-3 rounded-lg font-bold text-lg shadow-lg shadow-red-600/20 transition-all"
@@ -159,10 +201,7 @@ const Upload: FC<UploadProps> = ({ onFrameSelect }) => {
                 Use This Frame — Generate Poster
               </button>
 
-              <button
-                onClick={triggerFileInput}
-                className="text-gray-500 hover:text-gray-300 text-sm underline"
-              >
+              <button onClick={triggerFileInput} className="text-gray-500 hover:text-gray-300 text-sm underline">
                 Upload a different video
               </button>
             </div>
