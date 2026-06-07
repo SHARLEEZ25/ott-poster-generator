@@ -16,7 +16,7 @@ export default function Projects({ projects, setProjects, setCurrentPage }: Proj
   const [selectedPoster, setSelectedPoster] = useState<Project | null>(null); // modal state
 
   const filtered = projects.filter(p => {
-    const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = (p.title ?? '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesGenre = genreFilter === 'all' || p.genre === genreFilter;
     return matchesSearch && matchesGenre;
   });
