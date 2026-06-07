@@ -43,6 +43,7 @@ function PosterAIAppContent() {
   const navigate = useNavigate();
   const location = useLocation();
   const [selectedFrame, setSelectedFrame] = useState<string | null>(null);
+  const [frameDescription, setFrameDescription] = useState<string | null>(null);
 
   const currentPage = location.pathname.substring(1).split('/')[0] || 'dashboard';
 
@@ -114,8 +115,9 @@ function PosterAIAppContent() {
             path="/upload"
             element={
               <Upload
-                onFrameSelect={(frameUrl: string) => {
+                onFrameSelect={(frameUrl: string, description: string | null) => {
                   setSelectedFrame(frameUrl);
+                  setFrameDescription(description);
                 }}
               />
             }
@@ -127,6 +129,7 @@ function PosterAIAppContent() {
               <PosterGenerator
                 user={user}
                 selectedFrame={selectedFrame}
+                frameDescription={frameDescription}
                 setCurrentPage={setCurrentPage}
                 setProjects={setProjects}
               />

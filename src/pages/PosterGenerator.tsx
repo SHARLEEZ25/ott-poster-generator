@@ -9,13 +9,15 @@ interface PosterGeneratorProps {
   setCurrentPage: (page: string) => void;
   setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
   selectedFrame: string | null;
+  frameDescription: string | null;
 }
 
 export default function PosterGenerator({
   user,
   setCurrentPage,
   setProjects,
-  selectedFrame
+  selectedFrame,
+  frameDescription
 }: PosterGeneratorProps) {
   const [formData, setFormData] = useState({
     title: '',
@@ -70,7 +72,8 @@ try {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      framePath: selectedFrame, // just send it directly
+      framePath: selectedFrame,
+      frameDescription: frameDescription,
       title: formData.title,
       genre: formData.genre,
       mood: formData.mood,
@@ -175,12 +178,18 @@ try {
 
         {selectedFrame && (
           <div className="mb-6 text-center">
-            <p className="text-gray-300 mb-2">Selected Frame Preview</p>
+            <div className="inline-flex items-center gap-2 bg-[#1a1a2e] border border-indigo-700 rounded-full px-3 py-1 mb-3">
+              <Sparkles className="w-3 h-3 text-indigo-400" />
+              <span className="text-indigo-300 text-xs font-medium">Gemini AI selected frame</span>
+            </div>
             <img
               src={selectedFrame}
-              alt="Selected Frame"
-              className="mx-auto max-h-64 rounded-lg border border-gray-700"
+              alt="AI-selected Frame"
+              className="mx-auto max-h-64 rounded-lg border border-indigo-700"
             />
+            {frameDescription && (
+              <p className="text-gray-500 text-xs mt-2 max-w-lg mx-auto italic">"{frameDescription}"</p>
+            )}
           </div>
         )}
 

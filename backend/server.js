@@ -2,18 +2,31 @@ import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
+import helmet from "helmet";
 import path from "path";
-
 
 dotenv.config();
 const app = express();
 
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || "http://localhost:5173",
-}));
-app.use(express.json());
+app.use(helmet());
 
-mongoose.connect(process.env.MONGODB_URI)
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",")
+  : ["http://localhost:5173", "http://localhost:5174"];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.some((o) => origin.startsWith(o))) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+}));
+
+app.use(express.json({ limit: "10mb" }));
+
+mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.error("❌ MongoDB error:", err));
 
@@ -21,18 +34,15 @@ import projectRoutes from "./routes/projects.js";
 import posterRoutes from "./routes/posterRoutes.js";
 import videoRoutes from "./routes/videoRoutes.js";
 
-app.use('/api/videos', videoRoutes);
-app.use('/api/posters', posterRoutes);        
-app.use('/api/projects', projectRoutes);     
+app.use("/api/videos", videoRoutes);
+app.use("/api/posters", posterRoutes);
+app.use("/api/projects", projectRoutes);
 app.use("/frames", express.static(path.join(process.cwd(), "frames")));
-
-
 
 app.get("/", (req, res) => res.send("Poster backend running 🚀"));
 
-
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', time: new Date().toISOString() });
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", time: new Date().toISOString() });
 });
 
 const PORT = process.env.PORT || 5000;
