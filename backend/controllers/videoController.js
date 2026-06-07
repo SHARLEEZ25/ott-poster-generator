@@ -197,7 +197,8 @@ export const uploadVideoAndExtractFrames = async (req, res) => {
 
     const toUrl = (absPath) => {
       const rel = path.relative(path.join(process.cwd(), "frames"), absPath);
-      return `${req.protocol}://${req.get("host")}/frames/${rel.split(path.sep).join("/")}`;
+      const protocol = process.env.RENDER ? "https" : req.protocol;
+      return `${protocol}://${req.get("host")}/frames/${rel.split(path.sep).join("/")}`;
     };
 
     const frameUrl = toUrl(framePath);
