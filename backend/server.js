@@ -9,6 +9,7 @@ dotenv.config();
 const app = express();
 
 app.use(helmet());
+app.set("trust proxy", 1); // Render/Vercel sit behind a reverse proxy — this makes req.protocol return https
 
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(",")
