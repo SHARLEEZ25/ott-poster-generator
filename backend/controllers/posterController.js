@@ -14,32 +14,43 @@ export const generatePosterFromFrame = async (req, res) => {
       stylePreset,
       aspectRatio,
       styleReference,
+      frameDescription,
     } = req.body;
 
-    const prompt = `Create a cinematic movie poster with ultra-realistic quality, suitable for a film trailer release. Include the following details:
+    // Build the visual foundation from Gemini's frame analysis if available
+    const visualBase = frameDescription
+      ? `Visual scene from the film: ${frameDescription}.`
+      : "Cinematic movie scene with dramatic lighting and professional composition.";
+
+    const prompt = `Create a cinematic movie poster with ultra-realistic quality, suitable for a film trailer release.
+
+VISUAL SCENE (extracted from the actual film):
+${visualBase}
+
+POSTER DETAILS:
 - Film Title: "${title}" (prominently displayed, bold typography)
 - Genre: ${genre}
-- Mood/Atmosphere: ${mood} (e.g., Dark & Moody, Dreamy, Futuristic)
-- Tagline: "${tagline}" (short and impactful, place it like a movie poster tagline)
-- Language: ${language} (optional in small text)
-- Font Style: ${fontStyle} (Cinematic, bold, readable)
-- Style Preset: ${stylePreset} (Photo-Real, Illustrated, etc.)
-- Aspect Ratio: ${aspectRatio} (poster format)
-- Visual References: ${styleReference || "dramatic lighting, neon glow, high contrast, cinematic composition"}
+- Mood/Atmosphere: ${mood}
+- Tagline: "${tagline || "No tagline — let the image speak"}" (short and impactful)
+- Language: ${language}
+- Font Style: ${fontStyle}
+- Style Preset: ${stylePreset}
+- Aspect Ratio: ${aspectRatio} (portrait poster format)
+- Additional Style: ${styleReference || "dramatic lighting, high contrast, cinematic composition"}
 
-Additional elements to include:
-- Release date at the bottom (fake or current date)
-- Small production/studio logo in corner
-- Film grain, professional lighting, high contrast, 4K resolution
-- Composition similar to official movie trailers
-- Include realistic shadows, reflections, depth
-- Make it feel like a real blockbuster poster, not just text on background
+POSTER REQUIREMENTS:
+- The poster should be visually inspired by the scene described above
+- Include the film title prominently at the top or bottom
+- Add the tagline in smaller text
+- Release date at the bottom
+- Film grain, professional lighting, 4K resolution
+- Make it feel like a real blockbuster OTT release poster
 Output format: PNG, high-resolution, cinematic style`;
 
     const client = new InferenceClient(process.env.HUGGINGFACE_API_KEY);
 
     const imageBlob = await client.textToImage({
-      provider: "nscale", 
+      provider: "nscale",
       model: "stabilityai/stable-diffusion-xl-base-1.0",
       inputs: prompt,
       parameters: { num_inference_steps: 8 },
