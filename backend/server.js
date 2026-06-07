@@ -39,10 +39,11 @@ import videoRoutes from "./routes/videoRoutes.js";
 app.use("/api/videos", videoRoutes);
 app.use("/api/posters", posterRoutes);
 app.use("/api/projects", projectRoutes);
-app.use("/frames", (req, res, next) => {
-  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
-  next();
-}, express.static(path.join(process.cwd(), "frames")));
+app.use("/frames", express.static(path.join(process.cwd(), "frames"), {
+  setHeaders: (res) => {
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+  },
+}));
 
 app.get("/", (req, res) => res.send("Poster backend running 🚀"));
 

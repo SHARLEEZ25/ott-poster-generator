@@ -77,19 +77,18 @@ Output format: PNG, high-resolution, cinematic style`;
       return res.status(500).json({ success: false, error: "Server configuration error." });
     }
 
-    console.log(`\n  [HuggingFace] Sending request to Stable Diffusion XL...`);
+    console.log(`\n  [HuggingFace] Sending request to FLUX.1-schnell...`);
     console.log(`  Prompt length: ${prompt.length} characters`);
 
     const client = new InferenceClient(process.env.HUGGINGFACE_API_KEY);
 
     const imageBlob = await withTimeout(
       client.textToImage({
-        provider: "nscale",
-        model: "stabilityai/stable-diffusion-xl-base-1.0",
+        model: "black-forest-labs/FLUX.1-schnell",
         inputs: prompt,
-        parameters: { num_inference_steps: 8 },
+        parameters: { num_inference_steps: 4 },
       }),
-      60000, // 60s timeout
+      120000, // 120s timeout
       "HuggingFace"
     );
 
