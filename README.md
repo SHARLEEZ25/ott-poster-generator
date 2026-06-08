@@ -207,7 +207,7 @@ This is a working MVP — not production-ready. Known gaps before any real launc
 ---
 
 ## Demo Video
-https://www.loom.com/share/a57774f3ef1a4fd08d7e12bfa05c0c6a
+https://www.loom.com/share/44b41039ffcd4b49b72002d00c31f59e
 
 
 *all rights reserved*
