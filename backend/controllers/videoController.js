@@ -115,17 +115,22 @@ function extractFrameAtTimestamp(videoPath, timestamp, outputDir, label = "best_
   });
 }
 
-async function extractAlternateFrames(videoPath, duration, outputDir, count = 6) {
+async function extractAlternateFrames(videoPath, duration, outputDir, count = 4) {
   console.log(`  [ffmpeg] Extracting ${count} alternate frames across ${duration.toFixed(1)}s video...`);
   const timestamps = Array.from({ length: count }, (_, i) =>
     parseFloat(((duration / (count + 1)) * (i + 1)).toFixed(2))
   );
 
-  const results = await Promise.allSettled(
-    timestamps.map((t, i) => extractFrameAtTimestamp(videoPath, t, outputDir, `alt_frame_${i + 1}`))
-  );
-
-  return results.filter((r) => r.status === "fulfilled").map((r) => r.value);
+  const results = [];
+  for (let i = 0; i < timestamps.length; i++) {
+    try {
+      const framePath = await extractFrameAtTimestamp(videoPath, timestamps[i], outputDir, `alt_frame_${i + 1}`);
+      results.push(framePath);
+    } catch (err) {
+      console.warn(`  [ffmpeg] Skipping alt frame ${i + 1}: ${err.message}`);
+    }
+  }
+  return results;
 }
 
 export const uploadVideoAndExtractFrames = async (req, res) => {
@@ -164,23 +169,29 @@ export const uploadVideoAndExtractFrames = async (req, res) => {
       console.warn("  Could not read duration, assuming 30s");
     }
 
-    // Run Gemini analysis and alternate frames in parallel
-    const [geminiResult, altFramePaths] = await Promise.allSettled([
-      process.env.GEMINI_API_KEY
-        ? withTimeout(
-            (async () => {
-              console.log("\n  🤖 Starting Gemini analysis...");
-              const geminiFile = await uploadVideoToGemini(videoPath, mimeType);
-              geminiFileName = geminiFile.name;
-              return await askGeminiForBestFrame(geminiFile);
-            })(),
-            90000, // 90s timeout
-            "Gemini"
-          )
-        : Promise.reject(new Error("No GEMINI_API_KEY")),
+    // Run Gemini first, then extract frames (sequential to stay within memory limits)
+    let geminiResult = { status: "rejected", reason: new Error("No GEMINI_API_KEY") };
+    if (process.env.GEMINI_API_KEY) {
+      try {
+        console.log("\n  🤖 Starting Gemini analysis...");
+        const geminiFile = await withTimeout(
+          (async () => {
+            const f = await uploadVideoToGemini(videoPath, mimeType);
+            geminiFileName = f.name;
+            return f;
+          })(),
+          90000,
+          "Gemini upload"
+        );
+        const best = await withTimeout(askGeminiForBestFrame(geminiFile), 60000, "Gemini inference");
+        geminiResult = { status: "fulfilled", value: best };
+      } catch (err) {
+        geminiResult = { status: "rejected", reason: err };
+      }
+    }
 
-      extractAlternateFrames(videoPath, duration, framesDir, 6),
-    ]);
+    const altFramePaths = await extractAlternateFrames(videoPath, duration, framesDir, 4);
+    const altFrameSettled = { status: "fulfilled", value: altFramePaths };
 
     if (geminiResult.status === "fulfilled") {
       timestamp = geminiResult.value.timestamp;
@@ -202,7 +213,7 @@ export const uploadVideoAndExtractFrames = async (req, res) => {
     };
 
     const frameUrl = toUrl(framePath);
-    const altUrls = altFramePaths.status === "fulfilled" ? altFramePaths.value.map(toUrl) : [];
+    const altUrls = altFramePaths.map(toUrl);
 
     console.log(`\n  ✅ SUCCESS — Primary frame: ${frameUrl}`);
     console.log(`  Alternate frames: ${altUrls.length} extracted`);
