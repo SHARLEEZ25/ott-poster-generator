@@ -206,6 +206,25 @@ This is a working MVP — not production-ready. Known gaps before any real launc
 
 ---
 
+## Running This Project
+
+To run this project locally you'll need:
+
+- Node.js 18+
+- A MongoDB Atlas connection string
+- A Gemini API key (Google AI Studio)
+- A Hugging Face API key (for poster generation)
+- FFmpeg (bundled automatically via `@ffmpeg-installer` — no manual install needed)
+
+Interested in running it or exploring the architecture?
+
+Reach out and I'll walk you through it.
+
+**Email:** sharleez.work@gmail.com
+**LinkedIn:** https://www.linkedin.com/in/sharleez-tech/
+
+---
+
 ## Demo Video
 https://www.loom.com/share/44b41039ffcd4b49b72002d00c31f59e
 
