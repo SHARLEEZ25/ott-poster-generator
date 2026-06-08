@@ -37,7 +37,7 @@ An MVP built for a client to demonstrate that the full AI pipeline works. Covers
 
 Indie filmmakers and short-film creators spend heavily on poster designers — a barrier that kills visibility for low-budget productions. This platform removes that barrier: upload footage, pick a scene, fill in a creative brief, and walk away with a cinematic AI-generated poster in seconds.
 
-Built with regional Indian cinema in mind: **English, Tamil, Telugu, Kannada, and Malayalam** supported out of the box.
+
 
 ---
 
