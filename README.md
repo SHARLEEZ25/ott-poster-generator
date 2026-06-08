@@ -13,6 +13,7 @@ Upload a video → extract frames → describe your film → get a cinematic pos
 [![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=flat-square&logo=mongodb&logoColor=white)](https://mongodb.com)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 [![Vite](https://img.shields.io/badge/Vite-7.x-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev)
+[![Gemini](https://img.shields.io/badge/Gemini-1.5%20Flash-4285F4?style=flat-square&logo=google&logoColor=white)](https://ai.google.dev)
 
 </div>
 
@@ -23,8 +24,9 @@ Upload a video → extract frames → describe your film → get a cinematic pos
 
 A production-grade AI SaaS platform covering the full engineering stack:
 
-- **Video processing pipeline** — FFmpeg frame extraction integrated as a Node.js service, no system FFmpeg required (bundled binary via `@ffmpeg-installer`)
-- **AI generation pipeline** — Stable Diffusion XL via Hugging Face Inference API with prompt engineering tuned for cinematic poster output
+- **AI frame analysis** — Gemini 1.5 Flash analyzes the uploaded video via the Gemini File API, identifies the most cinematic frame by timestamp, and returns a detailed scene description that grounds the poster in the actual footage
+- **Video processing pipeline** — FFmpeg extracts the Gemini-selected frame at the exact timestamp; no system FFmpeg required (bundled binary via `@ffmpeg-installer`)
+- **AI generation pipeline** — FLUX.1-schnell via Hugging Face Inference API; Gemini's frame description is woven into the cinematic prompt for visually grounded output
 - **REST API** — Express 5, MVC architecture, input validation, rate limiting (10 req/hr per IP), safe error responses
 - **React SPA** — TypeScript, responsive design, routing, project management, community gallery
 - **Data persistence** — MongoDB Atlas + Mongoose; every generated poster saved with full metadata
@@ -59,30 +61,28 @@ Built with regional Indian cinema in mind: **English, Tamil, Telugu, Kannada, an
          │                 │
    ┌─────▼──────┐  ┌───────▼──────────────────┐
    │  MongoDB   │  │     External Services     │
-   │  Atlas     │  │  Hugging Face SDXL API    │
-   │  Mongoose  │  │  FFmpeg  (frame extract)  │
-   └────────────┘  └──────────────────────────┘
+   │  Atlas     │  │  Gemini 1.5 Flash API     │
+   │  Mongoose  │  │  HuggingFace FLUX.1-schnell│
+   └────────────┘  │  FFmpeg  (frame extract)  │
+                   └──────────────────────────┘
 ```
 
 ---
 
 ## How It Works
 
-### Current Implementation — text-to-image (MVP)
-
-> **Engineering transparency:** The current build uses **text-to-image only.** This is an intentional MVP decision — here's exactly what's happening and what's planned next.
+### Current Implementation — Gemini-grounded image generation
 
 | Step | What Happens | Tech |
 |------|-------------|------|
 | 1. Upload video | User uploads footage | Multer → temp storage |
-| 2. Frame extraction | 4 frames extracted at 20/40/60/80% of video duration | FFmpeg child process |
-| 3. Frame selection | User picks the frame that best represents their film's tone — helps articulate the creative brief | UX only (not AI input yet) |
-| 4. Generation form | Title, genre, mood, tagline, style preset, aspect ratio, language | React controlled form |
-| 5. Prompt construction | All inputs composed into a detailed cinematic prompt | `posterController.js` |
-| 6. AI generation | Prompt sent to Stable Diffusion XL via Hugging Face Inference API | `@huggingface/inference` |
-| 7. Save & display | Base64 PNG saved as a Project document in MongoDB | Mongoose `Project.create()` |
-
-**Why isn't the frame fed to the AI?** SDXL text-to-image doesn't accept image inputs. Image-conditioned generation requires an img2img pipeline or ControlNet — that's the next engineering milestone.
+| 2. Gemini analysis | Video uploaded to Gemini File API; Gemini 1.5 Flash identifies the most cinematic frame by timestamp and returns a detailed scene description | `@google/generative-ai` |
+| 3. Frame extraction | FFmpeg extracts the single AI-selected frame at the exact timestamp returned by Gemini | FFmpeg child process |
+| 4. Frame display | Extracted frame shown with Gemini badge + description preview; user clicks Proceed | React UI |
+| 5. Generation form | Title, genre, mood, tagline, style preset, aspect ratio, language | React controlled form |
+| 6. Prompt construction | Gemini's frame description woven into a detailed cinematic prompt alongside all form inputs | `posterController.js` |
+| 7. AI generation | Prompt sent to FLUX.1-schnell via Hugging Face Inference API | `@huggingface/inference` |
+| 8. Save & display | Base64 PNG saved as a Project document in MongoDB | Mongoose `Project.create()` |
 
 ---
 
@@ -90,8 +90,9 @@ Built with regional Indian cinema in mind: **English, Tamil, Telugu, Kannada, an
 
 | Feature | Details |
 |---------|---------|
-| Video frame extraction | 4 frames per video at evenly spaced timestamps |
-| AI poster generation | Stable Diffusion XL — cinematic prompt engineering |
+| Gemini AI frame selection | Gemini 1.5 Flash picks the most cinematic frame from the video by timestamp |
+| Scene-grounded poster generation | Gemini's frame description is injected into the generation prompt for visually accurate output |
+| AI poster generation | FLUX.1-schnell (HuggingFace) — fast cinematic prompt engineering, 4-step inference |
 | 7 mood options | Dark, Dreamy, Vintage, Futuristic, Minimal, Retro, Gritty |
 | 6 genres | Drama, Thriller, Romance, Horror, Comedy, Documentary |
 | 5 style presets | Photo-Real, Illustrated, Retro-Poster, 3D-Cinematic, Minimal |
@@ -118,8 +119,9 @@ Built with regional Indian cinema in mind: **English, Tamil, Telugu, Kannada, an
 | Backend framework | Express 5 | REST API |
 | Database | MongoDB Atlas + Mongoose | Document store + ODM |
 | File uploads | Multer | Multipart form handling |
-| Video processing | fluent-ffmpeg + @ffmpeg-installer | Frame extraction (bundled binary) |
-| AI generation | Hugging Face Inference API | Stable Diffusion XL |
+| AI frame analysis | Google Gemini 1.5 Flash (`@google/generative-ai`) | Cinematic frame selection + scene description |
+| Video processing | fluent-ffmpeg + @ffmpeg-installer | Frame extraction at Gemini-selected timestamp (bundled binary) |
+| AI generation | Hugging Face Inference API | FLUX.1-schnell — fast text-to-image |
 | Rate limiting | express-rate-limit | Abuse protection |
 | Auth (planned) | Supabase | Managed auth — in dependency tree, not yet wired |
 | Password hashing | bcryptjs | For auth milestone |
@@ -169,18 +171,18 @@ ott-poster-generator/
 
 | Status | Milestone |
 |--------|-----------|
-| ✅ | Video upload + FFmpeg frame extraction |
-| ✅ | AI poster generation via Stable Diffusion XL |
+| ✅ | Video upload + Gemini AI frame selection (cinematic timestamp + scene description) |
+| ✅ | FFmpeg frame extraction at Gemini-selected timestamp |
+| ✅ | AI poster generation via FLUX.1-schnell (scene-grounded via Gemini description) |
 | ✅ | Project library + community gallery + dashboard |
 | ✅ | Multi-language support (EN / TA / TE / KN / ML) |
 | ✅ | Rate limiting + input validation + safe error handling |
-| 🔜 | **Image-conditioned generation** — feed selected frame into img2img / ControlNet pipeline |
 | 🔜 | Full authentication — Supabase or JWT, replace mock user |
 | 🔜 | Cloud storage — S3 / Cloudflare R2 for frames and posters |
 | 🔜 | Subscription billing — Stripe integration, Free / Pro / Studio tiers |
 | 📋 | High-resolution export — 1080×1620+ PNG, PDF for print |
 | 📋 | Team workspaces — studio accounts, brand kit, shared projects |
-| 📋 | Multiple AI backends — FLUX, fine-tuned regional cinema models |
+| 📋 | Fine-tuned regional cinema models |
 | 📋 | Public developer API |
 
 ---
@@ -189,10 +191,10 @@ ott-poster-generator/
 
 These are documented intentionally — not to hide them, but to show they're understood and sequenced.
 
-- **Frame → AI:** The selected frame does not yet feed into the AI model. It is a UX tool for creative direction. Image conditioning (img2img) is the next engineering milestone.
 - **Auth is mocked:** `mockUser` in `api.tsx` is a placeholder. Real per-user auth is the next backend milestone.
 - **Ephemeral frame storage:** Frames live on the server filesystem — fine for local/single-instance, needs cloud storage for production.
-- **Generation latency:** HuggingFace free inference tier takes 10–30 seconds. A paid endpoint or self-hosted model brings this to 2–5 seconds.
+- **Generation latency:** HuggingFace free inference tier can take 10–30 seconds on cold starts. A paid endpoint or self-hosted model brings this to 2–5 seconds.
+- **Gemini File API cleanup:** Uploaded video files are not yet deleted from Gemini's storage after analysis — a cleanup step is needed for production.
 
 ---
 
