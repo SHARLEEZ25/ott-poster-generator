@@ -2,9 +2,9 @@
 
 # OTT Poster Generator
 
-**Full-stack AI SaaS — built as a portfolio project demonstrating end-to-end product engineering.**
+**MVP client build — proving the core AI pipeline works end-to-end.**
 
-Upload a video → extract frames → describe your film → get a cinematic poster in seconds.
+Upload a video → AI picks the best frame → describe your film → get a cinematic poster in seconds.
 
 [![React](https://img.shields.io/badge/React-18.3-61DAFB?style=flat-square&logo=react&logoColor=white)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
@@ -22,7 +22,7 @@ Upload a video → extract frames → describe your film → get a cinematic pos
 
 ## What Was Built
 
-A production-grade AI SaaS platform covering the full engineering stack:
+An MVP built for a client to demonstrate that the full AI pipeline works. Covers the complete flow from video upload to generated poster:
 
 - **AI frame analysis** — Gemini 1.5 Flash analyzes the uploaded video via the Gemini File API, identifies the most cinematic frame by timestamp, and returns a detailed scene description that grounds the poster in the actual footage
 - **Video processing pipeline** — FFmpeg extracts the Gemini-selected frame at the exact timestamp; no system FFmpeg required (bundled binary via `@ffmpeg-installer`)
@@ -153,7 +153,7 @@ ott-poster-generator/
 └── backend/                        # Express REST API (ESM)
     ├── controllers/
     │   ├── videoController.js      # FFmpeg frame extraction
-    │   ├── posterController.js     # Hugging Face SDXL generation
+    │   ├── posterController.js     # FLUX.1-schnell generation via HuggingFace
     │   └── projectController.js    # Project CRUD + input validation
     ├── routes/
     │   ├── videoRoutes.js          # POST /api/videos/upload-video
@@ -167,34 +167,42 @@ ott-poster-generator/
 ---
 
 
-## Roadmap
+## MVP Checklist
 
-| Status | Milestone |
-|--------|-----------|
-| ✅ | Video upload + Gemini AI frame selection (cinematic timestamp + scene description) |
+| Status | Feature |
+|--------|---------|
+| ✅ | Video upload |
+| ✅ | Gemini AI frame selection (cinematic timestamp + scene description) |
 | ✅ | FFmpeg frame extraction at Gemini-selected timestamp |
 | ✅ | AI poster generation via FLUX.1-schnell (scene-grounded via Gemini description) |
 | ✅ | Project library + community gallery + dashboard |
 | ✅ | Multi-language support (EN / TA / TE / KN / ML) |
-| ✅ | Rate limiting + input validation + safe error handling |
-| 🔜 | Full authentication — Supabase or JWT, replace mock user |
-| 🔜 | Cloud storage — S3 / Cloudflare R2 for frames and posters |
-| 🔜 | Subscription billing — Stripe integration, Free / Pro / Studio tiers |
-| 📋 | High-resolution export — 1080×1620+ PNG, PDF for print |
-| 📋 | Team workspaces — studio accounts, brand kit, shared projects |
-| 📋 | Fine-tuned regional cinema models |
-| 📋 | Public developer API |
+| ✅ | Rate limiting + basic input validation |
+
+## What Comes Next (post-MVP)
+
+| Priority | Feature |
+|----------|---------|
+| High | Real authentication — Supabase or JWT |
+| High | Cloud storage for frames + posters (S3 / Cloudflare R2) |
+| Medium | Faster AI inference — paid HuggingFace endpoint or self-hosted |
+| Medium | Gemini File API cleanup after analysis |
+| Later | Subscription billing — Stripe, Free / Pro / Studio tiers |
+| Later | High-resolution export — 1080×1620+ PNG, PDF for print |
+| Later | Fine-tuned regional cinema models |
 
 ---
 
-## Known Limitations
+## Current Limitations (MVP scope)
 
-These are documented intentionally — not to hide them, but to show they're understood and sequenced.
+This is a working MVP — not production-ready. Known gaps before any real launch:
 
-- **Auth is mocked:** `mockUser` in `api.tsx` is a placeholder. Real per-user auth is the next backend milestone.
-- **Ephemeral frame storage:** Frames live on the server filesystem — fine for local/single-instance, needs cloud storage for production.
-- **Generation latency:** HuggingFace free inference tier can take 10–30 seconds on cold starts. A paid endpoint or self-hosted model brings this to 2–5 seconds.
-- **Gemini File API cleanup:** Uploaded video files are not yet deleted from Gemini's storage after analysis — a cleanup step is needed for production.
+- **Auth is mocked:** `mockUser` in `api.tsx` is a placeholder. No real login/signup yet.
+- **Ephemeral frame storage:** Frames live on the server filesystem. Fine for demos, not for multi-user or cloud deployment.
+- **Generation latency:** HuggingFace free inference tier takes 10–30 seconds on cold starts.
+- **Gemini File API cleanup:** Uploaded videos are not deleted from Gemini's storage after analysis.
+- **No cloud storage:** Posters are stored as base64 in MongoDB — needs S3/R2 before scaling.
+- **Single instance only:** No load balancing, no horizontal scaling considered yet.
 
 ---
 
@@ -202,4 +210,4 @@ These are documented intentionally — not to hide them, but to show they're und
 https://www.loom.com/share/a57774f3ef1a4fd08d7e12bfa05c0c6a
 
 
-*Portfolio project. All rights reserved.*
+*MVP build. Not production-ready.*
