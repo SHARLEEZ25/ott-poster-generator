@@ -45,7 +45,7 @@ async function uploadVideoToGemini(videoPath, mimeType) {
 async function askGeminiForBestFrame(geminiFile) {
   console.log("  [Gemini] Asking Gemini to pick the best cinematic frame...");
   const response = await genai.models.generateContent({
-    model: "gemini-1.5-flash-8b",
+    model: "gemini-2.0-flash",
     contents: [
       {
         parts: [
