@@ -13,7 +13,7 @@ Upload a video → AI picks the best frame → describe your film → get a cine
 [![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=flat-square&logo=mongodb&logoColor=white)](https://mongodb.com)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 [![Vite](https://img.shields.io/badge/Vite-7.x-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev)
-[![Gemini](https://img.shields.io/badge/Gemini-1.5%20Flash--8B-4285F4?style=flat-square&logo=google&logoColor=white)](https://ai.google.dev)
+[![Gemini](https://img.shields.io/badge/Gemini-2.5%20Flash-4285F4?style=flat-square&logo=google&logoColor=white)](https://ai.google.dev)
 
 </div>
 
@@ -24,7 +24,7 @@ Upload a video → AI picks the best frame → describe your film → get a cine
 
 An MVP built for a client to demonstrate that the full AI pipeline works. Covers the complete flow from video upload to generated poster:
 
-- **AI frame analysis** — Gemini 1.5 Flash-8B analyzes the uploaded video via the Gemini File API, identifies the most cinematic frame by timestamp, and returns a detailed scene description that grounds the poster in the actual footage
+- **AI frame analysis** — Gemini 2.5 Flash analyzes the uploaded video via the Gemini File API, identifies the most cinematic frame by timestamp, and returns a detailed scene description that grounds the poster in the actual footage
 - **Video processing pipeline** — FFmpeg extracts the Gemini-selected frame at the exact timestamp; no system FFmpeg required (bundled binary via `@ffmpeg-installer`)
 - **AI generation pipeline** — FLUX.1-schnell via Hugging Face Inference API; Gemini's frame description is woven into the cinematic prompt for visually grounded output
 - **REST API** — Express 5, MVC architecture, input validation, rate limiting (10 req/hr per IP), safe error responses
@@ -61,7 +61,7 @@ Built with regional Indian cinema in mind: **English, Tamil, Telugu, Kannada, an
          │                 │
    ┌─────▼──────┐  ┌───────▼──────────────────┐
    │  MongoDB   │  │     External Services     │
-   │  Atlas     │  │  Gemini 1.5 Flash-8B API  │
+   │  Atlas     │  │  Gemini 2.5 Flash API  │
    │  Mongoose  │  │  HuggingFace FLUX.1-schnell│
    └────────────┘  │  FFmpeg  (frame extract)  │
                    └──────────────────────────┘
@@ -76,7 +76,7 @@ Built with regional Indian cinema in mind: **English, Tamil, Telugu, Kannada, an
 | Step | What Happens | Tech |
 |------|-------------|------|
 | 1. Upload video | User uploads footage | Multer → temp storage |
-| 2. Gemini analysis | Video uploaded to Gemini File API; Gemini 1.5 Flash-8B identifies the most cinematic frame by timestamp and returns a detailed scene description | `@google/generative-ai` |
+| 2. Gemini analysis | Video uploaded to Gemini File API; Gemini 2.5 Flash identifies the most cinematic frame by timestamp and returns a detailed scene description | `@google/generative-ai` |
 | 3. Frame extraction | FFmpeg extracts the single AI-selected frame at the exact timestamp returned by Gemini | FFmpeg child process |
 | 4. Frame display | Extracted frame shown with Gemini badge + description preview; user clicks Proceed | React UI |
 | 5. Generation form | Title, genre, mood, tagline, style preset, aspect ratio, language | React controlled form |
@@ -90,7 +90,7 @@ Built with regional Indian cinema in mind: **English, Tamil, Telugu, Kannada, an
 
 | Feature | Details |
 |---------|---------|
-| Gemini AI frame selection | Gemini 1.5 Flash-8B picks the most cinematic frame from the video by timestamp |
+| Gemini AI frame selection | Gemini 2.5 Flash picks the most cinematic frame from the video by timestamp |
 | Scene-grounded poster generation | Gemini's frame description is injected into the generation prompt for visually accurate output |
 | AI poster generation | FLUX.1-schnell (HuggingFace) — fast cinematic prompt engineering, 4-step inference |
 | 7 mood options | Dark, Dreamy, Vintage, Futuristic, Minimal, Retro, Gritty |
@@ -119,7 +119,7 @@ Built with regional Indian cinema in mind: **English, Tamil, Telugu, Kannada, an
 | Backend framework | Express 5 | REST API |
 | Database | MongoDB Atlas + Mongoose | Document store + ODM |
 | File uploads | Multer | Multipart form handling |
-| AI frame analysis | Google Gemini 1.5 Flash-8B (`@google/generative-ai`) | Cinematic frame selection + scene description |
+| AI frame analysis | Google Gemini 2.5 Flash (`@google/generative-ai`) | Cinematic frame selection + scene description |
 | Video processing | fluent-ffmpeg + @ffmpeg-installer | Frame extraction at Gemini-selected timestamp (bundled binary) |
 | AI generation | Hugging Face Inference API | FLUX.1-schnell — fast text-to-image |
 | Rate limiting | express-rate-limit | Abuse protection |
