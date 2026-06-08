@@ -24,7 +24,7 @@ Upload a video → AI picks the best frame → describe your film → get a cine
 
 An MVP built for a client to demonstrate that the full AI pipeline works. Covers the complete flow from video upload to generated poster:
 
-- **AI frame analysis** — Gemini 1.5 Flash analyzes the uploaded video via the Gemini File API, identifies the most cinematic frame by timestamp, and returns a detailed scene description that grounds the poster in the actual footage
+- **AI frame analysis** — Gemini 1.5 Flash-8B analyzes the uploaded video via the Gemini File API, identifies the most cinematic frame by timestamp, and returns a detailed scene description that grounds the poster in the actual footage
 - **Video processing pipeline** — FFmpeg extracts the Gemini-selected frame at the exact timestamp; no system FFmpeg required (bundled binary via `@ffmpeg-installer`)
 - **AI generation pipeline** — FLUX.1-schnell via Hugging Face Inference API; Gemini's frame description is woven into the cinematic prompt for visually grounded output
 - **REST API** — Express 5, MVC architecture, input validation, rate limiting (10 req/hr per IP), safe error responses
@@ -61,7 +61,7 @@ Built with regional Indian cinema in mind: **English, Tamil, Telugu, Kannada, an
          │                 │
    ┌─────▼──────┐  ┌───────▼──────────────────┐
    │  MongoDB   │  │     External Services     │
-   │  Atlas     │  │  Gemini 1.5 Flash API     │
+   │  Atlas     │  │  Gemini 1.5 Flash-8B API  │
    │  Mongoose  │  │  HuggingFace FLUX.1-schnell│
    └────────────┘  │  FFmpeg  (frame extract)  │
                    └──────────────────────────┘
